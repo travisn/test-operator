@@ -14,8 +14,8 @@ import (
 )
 
 const (
-	tprName    = "test"
-	tprGroup   = "myrook.io"
+	tprKind    = "cluster"
+	tprGroup   = "test.io"
 	tprVersion = "v1beta1"
 )
 
@@ -51,8 +51,8 @@ func watchTPR(clientset *kubernetes.Clientset, ns, host string) {
 		log.Fatalf("failed to get http tpr client. %+v", err)
 	}
 
-	uri := fmt.Sprintf("%s/apis/%s/%s/namespaces/%s/%s?watch=true&resourceVersion=%s",
-		host, tprGroup, tprVersion, ns, tprName, resourceVersion)
+	uri := fmt.Sprintf("%s/apis/%s/%s/namespaces/%s/clusters?watch=true&resourceVersion=%s",
+		host, tprGroup, tprVersion, ns, resourceVersion)
 	log.Printf("watching uri: %s", uri)
 	resp, err := httpCli.Client.Get(uri)
 	if err != nil {
@@ -69,7 +69,7 @@ func createTPR(clientset *kubernetes.Clientset, ns string) error {
 	log.Printf("creating test TPR")
 	tpr := &v1beta1.ThirdPartyResource{
 		ObjectMeta: v1.ObjectMeta{
-			Name: fmt.Sprintf("%s.%s", tprName, tprGroup),
+			Name: fmt.Sprintf("%s.%s", tprKind, tprGroup),
 		},
 		Versions: []v1beta1.APIVersion{
 			{Name: tprVersion},
@@ -90,12 +90,14 @@ func createTPR(clientset *kubernetes.Clientset, ns string) error {
 
 		uri := fmt.Sprintf("/apis/%s/%s/namespaces/%s/clusters", tprGroup, tprVersion, ns)
 		_, err := clientset.CoreV1().RESTClient().Get().RequestURI(uri).DoRaw()
+		if err == nil {
+			break
+		}
 		if err != nil {
-			if errors.IsNotFound(err) {
-				log.Printf("tpr not found")
-				continue
+			if !errors.IsNotFound(err) {
+				return err
 			}
-			return err
+			log.Printf("tpr not found yet")
 		}
 	}
 	return nil
