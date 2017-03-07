@@ -1,0 +1,6 @@
+package: github.com/rook/tprtest
+import:
+- package: k8s.io/client-go
+  version: e121606b0d09b2e1c467183ee46217fa85a6b672
+  subpackages:
+  - kubernetes/typed/core/v1

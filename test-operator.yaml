@@ -1,0 +1,19 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: test-operator
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        name: test-operator
+    spec:
+      containers:
+      - name: test-operator
+        image: test-operator:dev
+        env:
+        - name: MY_POD_NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
